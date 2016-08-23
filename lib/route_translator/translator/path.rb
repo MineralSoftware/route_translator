@@ -7,8 +7,7 @@ module RouteTranslator
         private
 
         def display_locale?(locale)
-          !RouteTranslator.config.hide_locale && !RouteTranslator.native_locale?(locale) &&
-            (!default_locale?(locale) || config_requires_locale?)
+          !RouteTranslator.config.hide_locale && !RouteTranslator.native_locale?(locale) && (!default_locale?(locale) || config_requires_locale?)
         end
 
         def config_requires_locale?
@@ -41,8 +40,14 @@ module RouteTranslator
       def translate(path, locale)
         new_path = path.dup
         final_optional_segments = new_path.slice!(%r{(\([^\/]+\))$})
+
+        ancestor_segments = []
         translated_segments = new_path.split('/').map do |seg|
-          seg.split('.').map { |phrase| Segment.translate(phrase, locale) }.join('.')
+          seg.split('.').map do |phrase|
+            translated_segment = Segment.translate(phrase, locale, ancestor_segments)
+            ancestor_segments << phrase
+            translated_segment
+          end.join('.')
         end
         translated_segments.reject!(&:empty?)
 
